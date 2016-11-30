@@ -14,6 +14,11 @@ from nltk.corpus import stopwords
 import unicodedata
 import sys
 
+'''
+load these packages for the code to run:
+module load anaconda/2.3.0
+'''
+
 sentence_start_token = "SENTENCESTART"
 sentence_end_token = "SENTENCEEND"
 
@@ -43,22 +48,23 @@ def tokenize(sentences):
         mod_sentences.append(full_desc)
     
     mod_sentences = map(strip_punctuation, mod_sentences)
-    print 'Tokenizing sentences..,'
+    print 'Tokenizing sentences...'
     toks = [nltk.word_tokenize(sent) for sent in mod_sentences]
     print 'Done'
 
     return toks
 
 
-def build_dict(descriptions):
+def build_dict(descriptions, vocab_size):
 
     tokenized_sentences = tokenize(descriptions)
 
     # Count the word frequencies
-    print 'Building dictionary..'
+    print 'Building dictionary...'
     word_freq = nltk.FreqDist(itertools.chain(*tokenized_sentences))
-    word_freq = sorted(word_freq.items(), key=lambda i: i[1], reverse=True)
-    print "Found %d unique words tokens." % len(word_freq.items())
+    #word_freq = sorted(word_freq.items(), key=lambda i: i[1], reverse=True)
+    word_freq = word_freq.most_common(vocab_size-1)
+    #print "Found %d unique words tokens." % len(word_freq)
 
     counts = [x[1] for x in word_freq]
     keys = [x[0] for x in word_freq]
@@ -74,20 +80,17 @@ def build_dict(descriptions):
             worddict[word] = idx + 4 # leave 0, 1 (UNK), 2 (sentence start), and 3(sentence end)
             idx += 1 
         
-    print numpy.sum(counts), ' total words ', len(keys), ' unique words'
+    print np.sum(counts), ' total words ', len(keys), ' unique words'
 
     return worddict
 
 
 def grab_data(sentences, dictionary):
 
-    sentences = data.clean_description
-
     sentences = tokenize(sentences)
 
     seqs = [None] * len(sentences)
-    for idx, ss in enumerate(sentences):
-        words = ss.strip().lower().split()
+    for idx, words in enumerate(sentences):
         seqs[idx] = [dictionary[w] if w in dictionary else 1 for w in words[:-1]]
 
 
@@ -95,37 +98,40 @@ def grab_data(sentences, dictionary):
 
 def main():
 
-    vocab_size = sys.argv[1]
+    vocab_size = int(sys.argv[1])
+    print vocab_size
 
     mypath = '/Users/Lucy/Google Drive/MSDS/2016Fall/DSGA1006/Data'
     f = open(mypath + '/lstm-rnn/lstm_data.pickle','rb')
-    X_train, X_test, y_train, y_test = pickle.load(f)
+    train_x, test_x, train_y, test_y = pickle.load(f)
     f.close()
 
-    train_desc = X_train.clean_description
-    test_desc = X_test.clean_description
+    train_desc = train_x.clean_description
+    test_desc = test_x.clean_description
 
-    worddict = build_dict(train_desc)
+    dictionary = build_dict(train_desc, vocab_size)
 
-    keys = worddict.keys()
-    values = worddict.values()
+    #keys = worddict.keys()
+    #values = worddict.values()
 
-    dictionary = {keys[values.index(v)]: v for v in sorted(word_to_index.values())[:vocab_size]}
+    #dictionary = {keys[values.index(v)]: v for v in sorted(values)[:vocab_size-1]}
+    print "Using vocabulary size %d." % vocab_size
 
 
     train_x = grab_data(train_desc, dictionary)
     test_x = grab_data(test_desc, dictionary)
 
-    f = open(fdataset_path + '../../Data/lstm-rnn/crunchbase.train.pickle', 'wb')
-    pkl.dump((train_x, train_y), f, -1)
+    print "saving new data files..."
+    f = open('../../Data/lstm-rnn/crunchbase.train.%s.pickle' % vocab_size, 'wb')
+    pickle.dump((train_x, train_y), f, -1)
     f.close()
 
-    f = open(fdataset_path + '../../Data/lstm-rnn/crunchbase.test.pickle', 'wb')
-    pkl.dump((test_x, test_y), f, -1)
+    f = open('../../Data/lstm-rnn/crunchbase.test.%s.pickle' % vocab_size, 'wb')
+    pickle.dump((test_x, test_y), f, -1)
     f.close()
 
-    f = open(fdataset_path + '../../Data/lstm-rnn/crunchbase.dict.pickle', 'wb')
-    pkl.dump(dictionary, f, -1)
+    f = open('../../Data/lstm-rnn/crunchbase.dict.%s.pickle' % vocab_size, 'wb')
+    pickle.dump(worddict, f, -1)
     f.close()
 
 if __name__ == '__main__':
