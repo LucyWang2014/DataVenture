@@ -2,7 +2,7 @@
 This files contains the functions used to preprocess the dataset for lstm-rnn model
 
 created by: Lucy Wang
-11.27.16
+12.3.16
 """
 
 import pandas as pd
@@ -102,14 +102,19 @@ def main():
     print vocab_size
 
     mypath = '/Users/Lucy/Google Drive/MSDS/2016Fall/DSGA1006/Data'
-    f = open(mypath + '/lstm-rnn/lstm_data.pickle','rb')
-    train_x, test_x, train_y, test_y = pickle.load(f)
+    f = open(mypath + '/rnn-encoder-decoder/lstm_data.pickle','rb')
+    train, test = pickle.load(f)
     f.close()
 
-    train_desc = train_x.clean_description
-    test_desc = test_x.clean_description
+    train_desc = train.clean_description.copy()
+    test_desc = test.clean_description.copy()
+    train_y = train.clean_short_description.copy()
+    test_y = test.clean_short_description.copy()
 
-    dictionary = build_dict(train_desc, vocab_size)
+    all_train = train_desc + train_y
+    print "%s sentences in training set" % all_train.shape[0]
+
+    dictionary = build_dict(all_train, vocab_size)
 
     #keys = worddict.keys()
     #values = worddict.values()
@@ -117,21 +122,21 @@ def main():
     #dictionary = {keys[values.index(v)]: v for v in sorted(values)[:vocab_size-1]}
     print "Using vocabulary size %d." % vocab_size
 
-    import pdb; pdb.set_trace()
-
     train_x = grab_data(train_desc, dictionary)
     test_x = grab_data(test_desc, dictionary)
+    train_y = grab_data(train_y, dictionary)
+    test_y = grab_data(test_y, dictionary)
 
     print "saving new data files..."
-    f = open('../../Data/lstm-rnn/crunchbase.train.%s.pickle' % vocab_size, 'wb')
+    f = open('../../Data/rnn-encoder-decoder/crunchbase.train.%s.pickle' % vocab_size, 'wb')
     pickle.dump((train_x, train_y), f, -1)
     f.close()
 
-    f = open('../../Data/lstm-rnn/crunchbase.test.%s.pickle' % vocab_size, 'wb')
+    f = open('../../Data/rnn-encoder-decoder/crunchbase.test.%s.pickle' % vocab_size, 'wb')
     pickle.dump((test_x, test_y), f, -1)
     f.close()
 
-    f = open('../../Data/lstm-rnn/crunchbase.dict.%s.pickle' % vocab_size, 'wb')
+    f = open('../../Data/rnn-encoder-decoder/crunchbase.dict.%s.pickle' % vocab_size, 'wb')
     pickle.dump(dictionary, f, -1)
     f.close()
 

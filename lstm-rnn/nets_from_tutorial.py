@@ -20,23 +20,23 @@ batch_size = 128
 nb_epoch = 100
 
 print('Loading data...')
-mypath = '/Users/Lucy/Google Drive/MSDS/2016Fall/DSGA1006/Data/lstm-rnn'
-f = open(mypath + '/crunchbase.train.5000.pickle','rb')
-X_train, y_train = pickle.load(f)
+mypath = '/Users/Lucy/Google Drive/MSDS/2016Fall/DSGA1006/Data'
+f = open(mypath + '/lstm-rnn/lstm_data.pickle','rb')
+X_train, X_test, y_train, y_test = pickle.load(f)
 f.close()
-f = open(mypath + '/crunchbase.test.5000.pickle','rb')
-X_test, y_test = pickle.load(f)
-f.close()
+
+X_train = X_train.clean_description.copy()
+X_test = X_test.clean_description.copy()
 print(len(X_train), 'train sequences')
 print(len(X_test), 'test sequences')
 
 print('Vectorizing sequence data...')
 max_desc_length = max_words
-X_train = sequence.pad_sequences(X_train, maxlen=max_desc_length)
-X_test = sequence.pad_sequences(X_test, maxlen=max_desc_length)
-#tokenizer = Tokenizer(nb_words=max_words)
-#X_train = tokenizer.sequences_to_matrix(X_train, mode='binary')
-#X_test = tokenizer.sequences_to_matrix(X_test, mode='binary')
+#X_train = sequence.pad_sequences(X_train, maxlen=max_desc_length)
+#X_test = sequence.pad_sequences(X_test, maxlen=max_desc_length)
+tokenizer = Tokenizer(nb_words=max_words)
+X_train = tokenizer.sequences_to_matrix(X_train, mode='binary')
+X_test = tokenizer.sequences_to_matrix(X_test, mode='binary')
 print('X_train shape:', X_train.shape)
 print('X_test shape:', X_test.shape)
 
@@ -58,6 +58,12 @@ print(nb_classes, 'classes')
 print('Building model...')
 model = Sequential()
 model.add(Dense(512, input_shape=(max_words,)))
+model.add(Activation('relu'))
+model.add(Dropout(0.5))
+model.add(Dense(512))
+model.add(Activation('relu'))
+model.add(Dropout(0.5))
+model.add(Dense(512))
 model.add(Activation('relu'))
 model.add(Dropout(0.5))
 model.add(Dense(nb_classes))
