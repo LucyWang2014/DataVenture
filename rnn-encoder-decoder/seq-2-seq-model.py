@@ -27,21 +27,24 @@ def pad(x, length = 100):
 
 	return train_x
 
-def transform_data(x, top_words = 10000):
-	dim = x.shape
-	transformed = np.zeros((dim[0],dim[1],top_words+1))
-	for i,seq in enumerate(x):
-		for j,word in enumerate(seq):
-			transformed[i][j][word] = 1
+def encode(data,length = 100, top_words = 10000):
 
-	return transformed
+	# convert integers to dummy variables (i.e. one hot encoded)
+	X = np.zeros((data.shape[0],length,top_words + 1))
+        for i, seq in enumerate(data):
+            x = np.zeros((length, top_words + 1))
+            for i,word in enumerate(seq):
+            	x[i,word] = 1
+            X[i] = x
+
+	return X
 
 def seq2seq_model(top_words = 10000, embedding_vector_length = 100, max_desc_length = 100, max_out_length = 15, hidden_neurons = 256):
 	
 	model = Sequential()  
-	model.add(Embedding(top_words, embedding_vector_length, input_length=max_desc_length))
-	model.add(LSTM(128,return_sequences = False))
-	#model.add(LSTM(input_shape = (max_desc_length,top_words+1), output_dim = hidden_neurons, return_sequences=False))
+	#model.add(Embedding(top_words, embedding_vector_length, input_length=max_desc_length))
+	#model.add(LSTM(128,return_sequences = False))
+	model.add(LSTM(input_shape = (max_desc_length,top_words+1), output_dim = hidden_neurons, return_sequences=False))
 	model.add(Dense(hidden_neurons, activation="relu"))
 	model.add(Dropout(0.2))
 	model.add(RepeatVector(max_out_length))
@@ -90,11 +93,12 @@ def main():
 	test_x = pad(test_x, 100)
 	train_y = pad(train_y, 15)
 	test_y = pad(test_y, 15)
-	#train_x = transform_data(train_x, 10000)
-	#test_x = transform_data(test_x, 10000)
-	#test_y = transform_data(test_y, 10000)
-	#train_y = transform_data(train_y, 10000)
+	train_x = encode(train_x)
+	test_x = encode(test_x)
+	train_y = encode(train_y)
+	test_y = encode(test_y)
 
+	import pdb; pdb.set_trace()
 
 	print 'building model...'
 	
@@ -108,7 +112,6 @@ def main():
 	model.fit(trunc_x, trunc_y, nb_epoch=epochs, batch_size=128,verbose = 1, validation_split = 0.1, shuffle = True)
 
 	scores = model.evaluate(trunc_test_x,trunc_test_y, verbose=1)
-	print scores
 
 	print 'saving models...'
 	# serialize model to JSON
