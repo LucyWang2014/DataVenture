@@ -15,6 +15,12 @@ from keras.utils import np_utils
 from keras.optimizers import SGD, Adam, Adadelta
 from keras.models import model_from_json
 
+'''
+load these packages for the code to run:
+module load keras/1.1.1
+module load scipy/intel/0.18.0
+module load tensorflow/python2.7/20160721
+'''
 
 def pad(x, length = 100):
 	# truncate and pad input sequences
@@ -35,7 +41,7 @@ def encode(data,length = 100, top_words = 10000):
 
 	return X
 
-def seq2seq_model(top_words = 10000, embedding_vector_length = 100, max_desc_length = 100, max_out_length = 15, hidden_neurons = 256):
+def seq2seq_model(top_words = 10000, embedding_vector_length = 128, max_desc_length = 100, max_out_length = 15, hidden_neurons = 256):
 	
 	model = Sequential()  
 	#model.add(Embedding(top_words, embedding_vector_length, input_length=max_desc_length))
@@ -105,7 +111,7 @@ def main():
 	trunc_test_x, trunc_test_y = get_data(test_x, test_y, size = test_data_size)
 
 	#training on all data with one lstm layer
-	model.fit(trunc_x, trunc_y, nb_epoch=epochs, batch_size=128,verbose = 1, validation_split = 0.1, shuffle = True)
+	model.fit(trunc_x, trunc_y, nb_epoch=epochs, batch_size=16,verbose = 1, validation_split = 0.1, shuffle = True)
 
 	scores = model.evaluate(trunc_test_x,trunc_test_y, verbose=1)
 

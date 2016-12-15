@@ -115,9 +115,7 @@ def main():
     #values = worddict.values()
 
     #dictionary = {keys[values.index(v)]: v for v in sorted(values)[:vocab_size-1]}
-    print "Using vocabulary size %d." % vocab_size
-
-    import pdb; pdb.set_trace()
+    print "Using vocabulary size %d." % vocab_size-1
 
     train_x = grab_data(train_desc, dictionary)
     test_x = grab_data(test_desc, dictionary)
